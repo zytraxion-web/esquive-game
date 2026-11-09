@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0b">
+  <meta name="description" content="Dernier Service — jeu d'horreur de poursuite à l'hôpital Saint-Aurore.">
+  <title>Dernier Service — Menu principal</title>
+  <link rel="stylesheet" href="src/menu.css">
+</head>
+<body>
+  <div class="scene" aria-hidden="true"><div class="hallway"></div><div class="light"></div><div class="grain"></div><div class="vignette"></div></div>
+  <header class="topbar">
+    <a class="wordmark" href="menu.html" aria-label="Dernier Service — accueil"><span class="mark">DS</span><span>DERNIER<br>SERVICE</span></a>
+    <div class="top-meta"><span class="status-dot"></span><span>SAINT-AURORE&nbsp; / &nbsp;NUIT 03</span></div>
+    <button class="icon-button" id="settingsOpen" aria-label="Ouvrir les paramètres" title="Paramètres">⚙</button>
+  </header>
+
+  <main class="layout">
+    <section class="intro" aria-labelledby="game-title">
+      <p class="eyebrow"><span class="line"></span> HÔPITAL SAINT-AURORE · 03:17</p>
+      <h1 id="game-title">Dernier<br><span>service.</span></h1>
+      <p class="description">Le courant est revenu. Quelque chose aussi.<br>Retrouvez les dossiers. Ne vous faites pas entendre.</p>
+      <a class="play-button" href="index.html"><span>JOUER</span><span class="play-icon" aria-hidden="true">↗</span></a>
+      <p class="play-note">LANCER LE PROTOTYPE SOLO</p>
+    </section>
+
+    <nav class="menu" aria-label="Menu principal">
+      <button class="menu-item selected" data-panel="play"><span class="item-number">01</span><span class="item-label">Continuer</span><span class="item-arrow">↗</span></button>
+      <button class="menu-item" data-panel="shop"><span class="item-number">02</span><span class="item-label">Boutique</span><span class="coming">PROCHAINEMENT</span></button>
+      <button class="menu-item" data-panel="progress"><span class="item-number">03</span><span class="item-label">Progression</span><span class="coming">PROCHAINEMENT</span></button>
+      <button class="menu-item" id="settingsMenu"><span class="item-number">04</span><span class="item-label">Paramètres</span><span class="item-arrow">＋</span></button>
+    </nav>
+
+    <aside class="feature-card" aria-live="polite">
+      <div class="card-top"><span id="card-kicker">VOTRE PROCHAINE PARTIE</span><span class="card-index" id="card-index">01 / 04</span></div>
+      <div class="card-content" id="card-content">
+        <p class="card-map">CARTE DISPONIBLE</p><h2>Le couloir<br>des oubliés</h2>
+        <p class="card-copy">Une aile condamnée. Trois dossiers manquants. Une présence qui se rapproche.</p>
+        <div class="card-footer"><span><i class="tiny-dot"></i> PROTOTYPE SOLO</span><span>01 CARTE</span></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer"><span>VERSION 0.1.0 · PROTOTYPE</span><span>WASD POUR SE DÉPLACER&nbsp;&nbsp; · &nbsp;&nbsp;SOURIS POUR REGARDER</span><span>ZYTRAXION WEB</span></footer>
+
+  <dialog class="settings-dialog" id="settingsDialog" aria-labelledby="settings-title">
+    <div class="dialog-header"><div><p class="eyebrow">CONFIGURATION</p><h2 id="settings-title">Paramètres</h2></div><button class="icon-button close-button" id="settingsClose" aria-label="Fermer">×</button></div>
+    <label class="setting-row" for="volume"><span><strong>Volume général</strong><small>Préférence enregistrée pour l’intégration audio.</small></span><span class="range-wrap"><output id="volumeOutput" for="volume">80 %</output><input id="volume" type="range" min="0" max="100" value="80"></span></label>
+    <label class="setting-row" for="quality"><span><strong>Qualité visuelle</strong><small>Réglage enregistré pour les prochaines cartes.</small></span><select id="quality"><option value="low">Basse</option><option value="medium">Moyenne</option><option value="high">Élevée</option></select></label>
+    <button class="save-button" id="settingsSave">ENREGISTRER</button>
+    <p class="dialog-note" id="settingsMessage" role="status">Les préférences sont sauvegardées sur cet appareil.</p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
