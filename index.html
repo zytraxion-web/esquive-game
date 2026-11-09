@@ -1,161 +1,86 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#080b0c" />
-  <title>Dernier Service — Hôpital Saint‑Aurore</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0b">
+  <title>Dernier Service — Survivre</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Oswald:wght@400;500;600&display=swap');
-    :root{color-scheme:dark;--red:#c84239;--paper:#d8d1c3;--muted:#85857e}
-    *{box-sizing:border-box}
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b0c;color:var(--paper);font-family:'DM Mono',monospace}
-    #game{position:fixed;inset:0}
-    canvas{display:block;width:100%;height:100%}
-    .grain{position:fixed;inset:-50%;z-index:2;pointer-events:none;opacity:.1;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");animation:grain .22s steps(2) infinite}
-    @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(2%,-1%)}50%{transform:translate(-1%,2%)}75%{transform:translate(1%,1%)}100%{transform:translate(-2%,-1%)}}
-    .vignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,.4) 72%,rgba(0,0,0,.88) 120%);transition:background .3s}
-    #hud{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .5s}
-    body.playing #hud{opacity:1}
-    .topline{position:absolute;left:34px;right:34px;top:26px;display:flex;justify-content:space-between;align-items:flex-start;font-size:10px;letter-spacing:.18em;color:#d4d0c3;text-transform:uppercase;text-shadow:0 2px 6px #000}
-    .brand{font-family:Oswald,sans-serif;font-size:18px;letter-spacing:.12em}
-    .objective{position:absolute;top:75px;left:34px;font-size:10px;letter-spacing:.12em;color:#b8b2a5}
-    .objective strong{display:block;font-weight:400;font-size:12px;color:#eee8d8;margin-top:8px;letter-spacing:.08em}
-    .items{display:flex;gap:8px;margin-top:9px}
-    .item{width:24px;height:7px;border:1px solid #6c6d66;background:#171b19;transition:all .3s}
-    .item.found{background:#d2b579;border-color:#e4cc94;box-shadow:0 0 12px #d2b57977}
-    .battery{position:absolute;right:34px;top:74px;width:144px;text-align:right;font-size:9px;letter-spacing:.12em;color:#b8b2a5}
-    .batterybar{height:3px;background:#282c29;margin-top:9px}
-    .batteryfill{height:100%;width:100%;background:#cbb887;transition:width .2s,background .2s}
-    .crosshair{position:absolute;left:50%;top:50%;width:5px;height:5px;border:1px solid #e6dfce;border-radius:50%;transform:translate(-50%,-50%);opacity:.65}
-    #hint{position:absolute;left:50%;bottom:42px;transform:translateX(-50%);font-size:9px;letter-spacing:.16em;color:#c5bfb1;text-align:center;text-shadow:0 2px 8px #000;white-space:nowrap}
-    #danger{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 38%,rgba(142,12,9,.42) 100%);transition:opacity .3s}
-    body.danger #danger{opacity:1}
-    #overlay{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:linear-gradient(90deg,rgba(5,7,7,.88),rgba(5,7,7,.58) 58%,rgba(5,7,7,.48)),radial-gradient(ellipse at 75% 48%,transparent,rgba(0,0,0,.45));transition:opacity .55s,visibility .55s}
-    #overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
-    .panel{width:min(570px,calc(100% - 44px));margin-left:min(10vw,150px)}
-    .eyebrow{font-size:10px;color:#b45a50;letter-spacing:.28em;margin-bottom:18px}
-    h1{font:600 clamp(48px,8vw,88px)/.87 Oswald,sans-serif;letter-spacing:.015em;text-transform:uppercase;margin:0;color:#e5dfd1;text-shadow:0 5px 35px #000}
-    h1 span{display:block;color:#a9322d}
-    .subtitle{font-size:11px;line-height:1.9;letter-spacing:.04em;color:#aaa99f;max-width:410px;margin:27px 0 28px}
-    .controls{border-left:1px solid #6e3731;padding:2px 0 2px 14px;margin:0 0 27px;color:#8f9089;font-size:9px;line-height:2.1;letter-spacing:.07em}
-    .controls b{color:#d5cdbc;font-weight:400}
-    button{appearance:none;border:1px solid #9c3d35;background:#a3322b;color:#f0e9dc;padding:15px 25px;font:500 11px 'DM Mono',monospace;letter-spacing:.19em;cursor:pointer;transition:background .2s,transform .2s}
-    button:hover{background:#c1483d;transform:translateY(-2px)}
-    .foot{font-size:8px;color:#686b67;letter-spacing:.13em;margin-top:26px}
-    #toast{position:fixed;z-index:4;left:50%;top:22%;transform:translate(-50%,-10px);opacity:0;transition:.35s;pointer-events:none;text-align:center;color:#e0d6c3;font-size:10px;letter-spacing:.18em;text-shadow:0 2px 12px #000}
-    #toast.show{opacity:1;transform:translate(-50%,0)}
-    #mobile{display:none;position:fixed;z-index:4;inset:auto 0 20px;justify-content:space-between;padding:0 22px;pointer-events:none}
-    .pad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:5px;pointer-events:auto}
-    .pad button,.runbtn{padding:0;background:#101412aa;border:1px solid #b5ae9c66;color:#eee;font-size:16px;touch-action:none}
-    .pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
-    .runbtn{align-self:end;width:64px;height:64px;border-radius:50%;font-size:9px;letter-spacing:.08em}
-    @media(max-width:700px){.topline{left:18px;right:18px;top:18px}.objective{left:18px;top:66px}.battery{right:18px;top:65px;width:105px}#hint{bottom:140px;font-size:8px}.panel{margin:0}.subtitle{font-size:10px}.controls{font-size:8px}#mobile{display:flex}.foot{margin-top:19px}}
+    :root{color-scheme:dark;--paper:#e2ddcf;--red:#a63832;--muted:#999890;font-family:'DM Mono',monospace;background:#090b0b;color:var(--paper)}*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{background:#090b0b}#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}.grain,.vignette{position:fixed;inset:0;pointer-events:none;z-index:2}.grain{inset:-50%;opacity:.09;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");animation:grain .22s steps(2) infinite}.vignette{background:radial-gradient(ellipse at center,transparent 28%,#0007 76%,#000e 120%)}@keyframes grain{50%{transform:translate(-1%,2%)}}#hud{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .4s}body.playing #hud{opacity:1}.topline{position:absolute;top:24px;left:30px;right:30px;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.17em;text-shadow:0 2px 8px #000}.objective{position:absolute;top:65px;left:30px;font-size:9px;letter-spacing:.12em;color:#bbb5a8}.objective strong{display:block;margin-top:8px;color:#eee8dc;font-size:11px;font-weight:400}.dots{display:flex;gap:6px;margin-top:8px}.dots i{width:24px;height:5px;border:1px solid #878174;background:#161916}.dots i.on{background:#c9ae78;border-color:#c9ae78;box-shadow:0 0 9px #c9ae7880}.stats{position:absolute;top:65px;right:30px;width:140px;text-align:right;font-size:8px;letter-spacing:.1em;color:#bbb5a8}.bar{height:3px;margin-top:7px;background:#282c29}.bar i{display:block;height:100%;width:100%;background:#cbb887;transition:width .15s}.cross{position:absolute;left:50%;top:50%;width:5px;height:5px;border:1px solid #eee;border-radius:50%;transform:translate(-50%,-50%);opacity:.7}#hint{position:absolute;bottom:25px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.13em;white-space:nowrap;color:#c5bfb1;text-shadow:0 2px 8px #000}.danger{position:fixed;z-index:2;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 36%,#a00c085e 100%);transition:opacity .25s}body.is-danger .danger{opacity:1}#overlay{position:fixed;z-index:5;inset:0;display:grid;place-items:center;overflow:auto;padding:25px;background:linear-gradient(90deg,#050707e8,#0507078c 65%,#05070763),radial-gradient(ellipse at 75% 48%,transparent,#0006);transition:opacity .35s,visibility .35s}#overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}.panel{width:min(590px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:8px}.eyebrow{font-size:9px;letter-spacing:.24em;color:#b8574d;margin:0 0 17px}.panel h1{font:600 clamp(54px,9vw,92px)/.86 Oswald,sans-serif;text-transform:uppercase;letter-spacing:.01em;margin:0;color:#e4dfd2}.panel h1 span{color:#a63832}.copy{max-width:470px;color:#aaa99f;font-size:10px;line-height:1.9;margin:21px 0}.controls{border-left:1px solid #763931;padding:2px 0 2px 13px;color:#92928a;font-size:8px;line-height:2}.controls b{font-weight:400;color:#ddd5c5}.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:19px 0}.map-card{min-height:84px;text-align:left;background:#111513dc;border:1px solid #ffffff20;color:#d4cebf;padding:11px;cursor:pointer;font:inherit;transition:.2s}.map-card:hover,.map-card.active{border-color:#a63832;background:#241412c9}.map-card small,.map-card strong{display:block}.map-card small{font-size:7px;color:#a95149;letter-spacing:.12em;margin-bottom:8px}.map-card strong{font:400 16px Oswald,sans-serif}.action{width:100%;height:48px;margin-top:17px;border:1px solid #c1564b;background:#a63832;color:#f0e9dc;cursor:pointer;font:10px 'DM Mono',monospace;letter-spacing:.18em}.action:hover{background:#c1483d}.secondary{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:#85857d;font-size:8px}.secondary a{color:#c7bda9;text-decoration:none}.secondary a:hover{color:white}.result{font:500 27px Oswald,sans-serif;color:#e4dfd2;margin:14px 0}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid #ffffff1b;font-size:10px}.setting-row input{accent-color:#a63832}.setting-row select{background:#151917;color:#eee;border:1px solid #ffffff30;padding:7px}.toast{position:fixed;z-index:4;top:22%;left:50%;transform:translate(-50%,-8px);opacity:0;transition:.2s;pointer-events:none;text-align:center;padding:10px 15px;background:#101311dd;border:1px solid #ffffff24;color:#e4dccb;font-size:9px;letter-spacing:.1em}.toast.show{opacity:1;transform:translate(-50%,0)}@media(max-width:600px){.topline{top:17px;left:17px;right:17px}.objective{left:17px;top:55px}.stats{top:55px;right:17px;width:112px}#hint{bottom:15px;font-size:7px}.map-grid{grid-template-columns:1fr}.map-card{min-height:58px}.panel h1{font-size:60px}.controls{font-size:7px}}
   </style>
 </head>
 <body>
-  <div id="game"></div><div class="grain"></div><div class="vignette"></div><div id="danger"></div>
-  <div id="hud">
-    <div class="topline"><div class="brand">SAINT-AURORE <span style="color:#a63d35">/</span> NUIT 03</div><div id="clock">03:17 AM</div></div>
-    <div class="objective">DOSSIERS PATIENTS <div class="items"><i class="item"></i><i class="item"></i><i class="item"></i></div><strong id="objectiveText">Récupérez les dossiers — 0 / 3</strong></div>
-    <div class="battery">LAMPE TORCHE<div class="batterybar"><div class="batteryfill" id="batteryFill"></div></div></div>
-    <div class="crosshair"></div><div id="hint">WASD POUR SE DÉPLACER&nbsp;&nbsp;·&nbsp;&nbsp; SOURIS POUR REGARDER&nbsp;&nbsp;·&nbsp;&nbsp; SHIFT POUR COURIR</div>
-  </div>
-  <div id="toast"></div>
-  <div id="mobile"><div class="pad"><button class="up" data-key="w">▲</button><button class="left" data-key="a">◀</button><button class="down" data-key="s">▼</button><button class="right" data-key="d">▶</button></div><button class="runbtn" data-key="shift">COURIR</button></div>
-  <div id="overlay"><main class="panel"><div class="eyebrow">HÔPITAL SAINT-AURORE &nbsp;·&nbsp; 03:17</div><h1>Dernier<span>service.</span></h1><p class="subtitle" id="intro">Les couloirs sont condamnés depuis vingt ans. Pourtant, quelque chose vient de rallumer le générateur. Retrouvez les trois dossiers et atteignez la sortie. Ne le laissez pas vous rattraper.</p><div class="controls"><b>W A S D</b> — se déplacer &nbsp; · &nbsp; <b>SOURIS</b> — regarder<br><b>SHIFT</b> — courir (attire son attention) &nbsp; · &nbsp; <b>F</b> — lampe torche</div><button id="startButton">ENTRER DANS L’HÔPITAL&nbsp; ↗</button><div class="foot">UN JEU D’HORREUR À LA PREMIÈRE PERSONNE &nbsp;·&nbsp; CASQUE RECOMMANDÉ</div></main></div>
+  <div id="game"></div><div class="grain"></div><div class="vignette"></div><div class="danger"></div>
+  <div id="hud"><div class="topline"><span>SAINT-AURORE &nbsp; / &nbsp; <span id="mapName">NUIT 03</span></span><span id="clock">03:17 AM</span></div><div class="objective">DOSSIERS PATIENTS<div class="dots"><i></i><i></i><i></i></div><strong id="objective">Trouvez les 3 dossiers</strong></div><div class="stats"><span id="staminaLabel">SOUFFLE</span><div class="bar"><i id="staminaBar"></i></div><span style="display:block;margin-top:13px">LAMPE TORCHE</span><div class="bar"><i id="batteryBar"></i></div></div><div class="cross"></div><div id="hint">WASD POUR BOUGER · SOURIS POUR REGARDER · MAJ POUR COURIR · F POUR LA LAMPE · ÉCHAP POUR PAUSE</div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <section id="overlay"><main class="panel" id="panel"></main></section>
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+    import { recordRun, getProfile } from './src/profile.js';
+    import { loadSettings, saveSettings } from './src/settings.js';
 
-    const mount=document.querySelector('#game');
-    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x090d0d); scene.fog=new THREE.FogExp2(0x090d0d,.035);
-    const camera=new THREE.PerspectiveCamera(74,innerWidth/innerHeight,.08,100); camera.rotation.order='YXZ';
-    const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.7)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15; mount.appendChild(renderer.domElement);
-
+    const maps=[
+      {id:'ward',name:'Aile des patients',short:'LES COULOIRS',description:'L’aile condamnée de Saint-Aurore. Trois dossiers, une sortie.',wall:0x62625a,floor:0x363a35,fog:0x090d0d,light:0xc5c8a9},
+      {id:'basement',name:'Sous-sol clinique',short:'LE SOUS-SOL',description:'Un sous-sol inondé. Les générateurs ne tiendront pas longtemps.',wall:0x454a49,floor:0x252d2c,fog:0x080d10,light:0x9eb7bc},
+      {id:'morgue',name:'La morgue',short:'LA MORGUE',description:'Les tiroirs sont ouverts. Ne vérifiez pas s’ils sont vides.',wall:0x55504b,floor:0x302d2b,fog:0x100b0b,light:0xc3a58a}
+    ];
+    const mount=document.querySelector('#game'),scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(74,innerWidth/innerHeight,.08,100);camera.rotation.order='YXZ';
+    const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;mount.appendChild(renderer.domElement);
     const mat=(color,roughness=1,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
-    const wallMat=mat(0x62625a), lowerMat=mat(0x464941), floorMat=mat(0x363a35), tileMat=mat(0x55574e), ceilingMat=mat(0x343936), trimMat=mat(0x777365), doorMat=mat(0x45473f), rusty=mat(0x583832), paperMat=mat(0xc8bd9f), metalMat=mat(0x68706b,.55,.5);
-    const world=new THREE.Group();scene.add(world);
-    function box(parent,x,y,z,w,h,d,material,cast=false,receive=true){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=receive;parent.add(o);return o}
-    // Long, narrow hospital corridor with a tiled wainscot and ceiling.
-    box(world,0,-.17,-10,8,.3,76,floorMat);box(world,0,3.8,-10,8,.25,76,ceilingMat);
-    box(world,-4,1.8,-10,.25,3.6,76,wallMat);box(world,4,1.8,-10,.25,3.6,76,wallMat);
-    box(world,-3.86,.75,-10,.05,1.45,76,lowerMat);box(world,3.86,.75,-10,.05,1.45,76,lowerMat);
-    // Tile grid and corridor skirting.
-    for(let z=27;z>-48;z-=2){box(world,0,-.008,z,7.88,.018,.018,tileMat);box(world,-3.86,1.48,z,.025,.035,.025,trimMat);box(world,3.86,1.48,z,.025,.035,.025,trimMat)}
-    for(let x=-3.5;x<=3.5;x+=2)box(world,x,-.007,0,.018,.018,75.8,tileMat);
-    // Ends, escape door, emergency signage and decorative wall pipes.
-    box(world,0,1.8,-49,8,3.6,.3,wallMat);box(world,0,1.6,27,8,3.2,.3,wallMat);
-    box(world,-3.52,2.4,-10,.08,.08,74,metalMat);box(world,3.52,2.4,-10,.08,.08,74,metalMat);
-    const exitDoor=box(world,0,1.45,-48.78,2.2,2.9,.12,mat(0x315347));
-    box(world,0,3.15,-48.65,1.6,.28,.1,mat(0x8d2923));
-    const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=128;const sx=signCanvas.getContext('2d');sx.fillStyle='#8c2924';sx.fillRect(0,0,512,128);sx.fillStyle='#eee3ce';sx.font='bold 66px Arial';sx.textAlign='center';sx.fillText('SORTIE',256,86);const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.55),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(signCanvas)}));sign.position.set(0,3.3,-48.55);world.add(sign);
-    // Patient room doors, small windows, room plates and wall lamps.
-    for(let z=22;z>-45;z-=8){for(const side of [-1,1]){const x=side*3.86;box(world,x,1.28,z, .14,2.55,2.05,doorMat,true);box(world,x-side*.08,1.65,z-.48,.035,.42,.55,mat(0x252b28));box(world,x-side*.11,1.55,z-.49,.02,.08,.25,mat(0x9a8d70));box(world,x-side*.14,1.12,z+.72,.025,.4,.32,rusty);}}
-    // Ceiling strips, each with a flickering light.
-    const lights=[];
-    for(let z=23;z>-47;z-=8){box(world,0,3.63,z,1.25,.04,2.7,mat(0x9d9b83));const light=new THREE.PointLight(0xc5c8a9,2.0,12,2);light.position.set(0,3.28,z);scene.add(light);lights.push({light,base:2,phase:Math.random()*9});box(world,0,3.36,z,1.05,.08,2.35,mat(0xc1bea7,.5));}
-    // Atmospheric red emergency lamps and scattered clinical clutter.
-    for(const z of [8,-16,-40]){const redLight=new THREE.PointLight(0xa32a20,1.8,8,2);redLight.position.set(3.35,2.7,z);scene.add(redLight);box(world,3.72,2.7,z,.12,.32,.4,mat(0x9b3028,.5));}
-    function makeCart(x,z){const g=new THREE.Group();world.add(g);g.position.set(x,0,z);box(g,0,.78,0,.85,.08,1.2,metalMat);box(g,0,.45,-.05,.72,.08,1.05,mat(0x555b56));for(const xx of [-.32,.32])for(const zz of [-.45,.42]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.08,10),mat(0x171a18));wheel.rotation.z=Math.PI/2;wheel.position.set(xx,.12,zz);g.add(wheel)}box(g,-.06,.9,-.08,.38,.07,.45,paperMat);box(g,.2,1.03,.22,.025,.22,.025,rusty);return g}
-    makeCart(-2.2,-4);makeCart(2.1,-30);
-    // A toppled gurney silhouette.
-    const gurney=new THREE.Group();world.add(gurney);gurney.position.set(-2.4,0,-20);gurney.rotation.y=.28;box(gurney,0,.75,0,1.15,.12,2.1,mat(0x787970));for(const x of [-.46,.46])for(const z of [-.75,.75]){const leg=box(gurney,x,.35,z,.07,.72,.07,metalMat);leg.rotation.z=x*.12}for(const z of [-.8,.8])box(gurney,0,1.02,z,.08,.42,.08,metalMat);
-    // Dust motes.
-    const dustGeo=new THREE.BufferGeometry(),dustCount=350,dustPos=new Float32Array(dustCount*3);for(let i=0;i<dustCount;i++){dustPos[i*3]=(Math.random()-.5)*7;dustPos[i*3+1]=Math.random()*3.5;dustPos[i*3+2]=Math.random()*74-47}dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));scene.add(new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0xb5b39a,size:.025,transparent:true,opacity:.32})));
-
-    // First-person torch and lights.
-    scene.add(new THREE.HemisphereLight(0x66706c,0x151713,.34));const ambient=new THREE.AmbientLight(0x77756a,.2);scene.add(ambient);
-    const torch=new THREE.SpotLight(0xffedc8,42,24,Math.PI/7,.48,1.4);camera.add(torch);torch.position.set(0,0,0);torch.target.position.set(0,0,-1);camera.add(torch.target);scene.add(camera);
-    const fillTorch=new THREE.PointLight(0xffe6bc,1.1,4,2);fillTorch.position.set(0,0,0);camera.add(fillTorch);
-
-    // Collectible patient files, glowing just enough to find in the gloom.
-    const files=[];const fileZ=[-9,-25,-39];
-    fileZ.forEach((z,i)=>{const group=new THREE.Group();group.position.set(i===1?2.45:-2.45,.85,z);world.add(group);const card=box(group,0,0,0,.42,.055,.58,paperMat);card.rotation.y=-.2;box(group,-.09,.035,-.08,.22,.012,.018,rusty);const glow=new THREE.PointLight(0xd2a65f,.7,2.5,2);glow.position.y=.2;group.add(glow);const ring=new THREE.Mesh(new THREE.TorusGeometry(.36,.018,6,24),new THREE.MeshBasicMaterial({color:0xc9a65f,transparent:true,opacity:.58}));ring.rotation.x=Math.PI/2;group.add(ring);files.push({group,z,x:group.position.x,got:false,ring});});
-
-    // The pursuer: a tall, gaunt silhouette with a pale mask and two unmistakable eyes.
-    const monster=new THREE.Group();world.add(monster);
-    const robeMat=mat(0x171b19),skinMat=mat(0x88877a),blackMat=mat(0x090a09),eyeMat=new THREE.MeshBasicMaterial({color:0xc22c20});
-    const torso=new THREE.Mesh(new CapsuleGeometryCompat(.48,1.22,5,8),robeMat);torso.position.y=1.52;monster.add(torso);
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.32,12,10),skinMat);head.scale.set(.82,1.16,.85);head.position.set(0,2.68,-.08);monster.add(head);
-    const hood=new THREE.Mesh(new THREE.SphereGeometry(.4,12,8,0,Math.PI*2,0,Math.PI*.75),robeMat);hood.scale.set(1,1.2,1);hood.position.set(0,2.73,.02);monster.add(hood);
-    for(const x of [-.13,.13]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),eyeMat);eye.position.set(x,2.7,-.34);monster.add(eye)}
-    const armGeo=new THREE.CapsuleGeometry(.12,.95,4,6);for(const x of [-.53,.53]){const arm=new THREE.Mesh(armGeo,robeMat);arm.position.set(x,1.65,-.04);arm.rotation.z=x<0?-.14:.14;monster.add(arm);const hand=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),skinMat);hand.position.set(x*1.14,.91,-.08);monster.add(hand)}
-    const legGeo=new THREE.CapsuleGeometry(.17,.65,4,6);for(const x of [-.22,.22]){const leg=new THREE.Mesh(legGeo,robeMat);leg.position.set(x,.47,0);monster.add(leg)}
-    monster.position.set(0,0,19);monster.visible=false;
-    function CapsuleGeometryCompat(radius,length,capSegments,radialSegments){return new THREE.CapsuleGeometry(radius,length,capSegments,radialSegments)}
-
-    const overlay=document.querySelector('#overlay'),startButton=document.querySelector('#startButton'),objectiveText=document.querySelector('#objectiveText'),batteryFill=document.querySelector('#batteryFill'),toast=document.querySelector('#toast');
-    let playing=false,ended=false,won=false,hasPointer=false,flashOn=true,battery=100,collected=0,elapsed=0,monsterZ=19,yaw=0,pitch=0,toastTimer=0,stepClock=0,lastTime=performance.now();
-    const keys={};const player={x:0,z:23.2,speed:3.05};camera.position.set(0,1.65,player.z);
-    function showToast(text){toast.textContent=text;toast.classList.add('show');toastTimer=2.2}
-    function begin(){if(playing)return;playing=true;ended=false;won=false;elapsed=0;battery=100;collected=0;monsterZ=19;player.x=0;player.z=23.2;yaw=0;pitch=0;flashOn=true;monster.visible=true;files.forEach(f=>{f.got=false;f.group.visible=true});document.querySelectorAll('.item').forEach(e=>e.classList.remove('found'));objectiveText.textContent='Récupérez les dossiers — 0 / 3';overlay.classList.add('hidden');document.body.classList.add('playing');if(innerWidth>700)renderer.domElement.requestPointerLock?.();}
-    startButton.addEventListener('click',begin);
-    document.addEventListener('pointerlockchange',()=>{hasPointer=document.pointerLockElement===renderer.domElement});
-    document.addEventListener('mousemove',e=>{if(playing&&hasPointer){yaw-=e.movementX*.0022;pitch-=e.movementY*.0018;pitch=Math.max(-1.25,Math.min(1.25,pitch))}});
-    document.addEventListener('keydown',e=>{const key=e.key.toLowerCase();keys[key]=true;if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(key))e.preventDefault();if(key==='f'&&playing){flashOn=!flashOn;showToast(flashOn?'LAMPE TORCHE : ALLUMÉE':'LAMPE TORCHE : ÉTEINTE')}if(key==='escape'&&playing&&!ended){document.exitPointerLock?.();overlay.classList.remove('hidden');document.querySelector('#intro').textContent='Pause. Le silence ne durera pas. Reprenez quand vous êtes prêt.';startButton.textContent='REPRENDRE LA PARTIE  ↗';playing=false;document.body.classList.remove('playing')}});
-    document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-    document.querySelectorAll('[data-key]').forEach(btn=>{const k=btn.dataset.key;const down=e=>{e.preventDefault();keys[k]=true};const up=e=>{e.preventDefault();keys[k]=false};btn.addEventListener('pointerdown',down);btn.addEventListener('pointerup',up);btn.addEventListener('pointerleave',up);btn.addEventListener('pointercancel',up)});
-    // Touch look: drag anywhere outside the movement pad.
-    let touchLook=null;renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&playing){touchLook={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)}});renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&touchLook&&playing){yaw-=(e.clientX-touchLook.x)*.006;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-touchLook.y)*.005));touchLook={x:e.clientX,y:e.clientY}}});renderer.domElement.addEventListener('pointerup',()=>touchLook=null);
-    function finish(victory){if(ended)return;ended=true;playing=false;won=victory;document.body.classList.remove('playing','danger');document.exitPointerLock?.();overlay.classList.remove('hidden');document.querySelector('.eyebrow').textContent=victory?'VOUS AVEZ SURVÉCU':'FIN DE SERVICE';document.querySelector('h1').innerHTML=victory?'Vous êtes<span>sorti·e.</span>':'Il vous<span>a trouvé.';document.querySelector('#intro').textContent=victory?'La porte se referme derrière vous. Les dossiers sont en sécurité. Mais, dans le bâtiment, quelque chose recommence à marcher.':'Le couloir redevient silencieux. Votre dossier rejoint les archives de Saint-Aurore.';document.querySelector('.controls').innerHTML=victory?'DOSSIERS RÉCUPÉRÉS : 3 / 3<br>TEMPS DANS L’HÔPITAL : '+formatTime(elapsed):'DOSSIERS RÉCUPÉRÉS : '+collected+' / 3<br>VOUS AVEZ TENU '+formatTime(elapsed);startButton.textContent='RECOMMENCER  ↗'}
-    const formatTime=t=>`${Math.floor(t/60).toString().padStart(2,'0')}:${Math.floor(t%60).toString().padStart(2,'0')}`;
-    function update(dt){elapsed+=dt;camera.rotation.set(pitch,yaw,0,'YXZ');
-      const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);let dx=0,dz=0;const len=Math.hypot(forward,side)||1;const running=keys.shift;const speed=player.speed*(running?1.55:1);dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side)/len*speed*dt;dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side)/len*speed*dt;
-      player.x=Math.max(-3.25,Math.min(3.25,player.x+dx));player.z=Math.max(-47.5,Math.min(25,player.z+dz));camera.position.set(player.x,1.65+Math.sin(elapsed*9)*Math.min(.035,Math.hypot(dx,dz)*.03),player.z);
-      if(Math.hypot(dx,dz)>.02){stepClock+=dt*(running?1.7:1);if(stepClock> (running?.33:.5)){stepClock=0;if(Math.random()<.25)showToast('…');}}
-      files.forEach((f,i)=>{f.ring.rotation.z+=dt*.7;if(!f.got&&Math.hypot(player.x-f.x,player.z-f.z)<1.15){f.got=true;f.group.visible=false;collected++;document.querySelectorAll('.item')[i].classList.add('found');objectiveText.textContent=collected<3?`Récupérez les dossiers — ${collected} / 3`:'Rejoignez la sortie';showToast('DOSSIER PATIENT RÉCUPÉRÉ');if(collected===3)showToast('LES 3 DOSSIERS SONT À VOUS — FUYEZ !')}});
-      const distance=Math.hypot(player.x-monster.position.x,player.z-monsterZ);const chaseSpeed=1.05+(collected*.13)+(running?.22:0);monsterZ-=chaseSpeed*dt;monster.position.z=monsterZ;monster.position.x+=(player.x-monster.position.x)*dt*.48;monster.rotation.y=Math.atan2(player.x-monster.position.x,player.z-monsterZ);monster.children.forEach((part,i)=>{if(i===0||i===1)part.rotation.x=Math.sin(elapsed*5+i)*.035});
-      if(distance<8&&Math.random()<dt*2)document.body.classList.add('danger');else if(distance>9)document.body.classList.remove('danger');
-      const chaseGap=player.z-monsterZ;if(chaseGap<1.6||distance<1.35){finish(false);return}
-      if(collected===3&&player.z<-46){finish(true);return}
-      if(flashOn){battery=Math.max(0,battery-dt*.72);if(battery===0){flashOn=false;showToast('BATTERIE ÉPUISÉE')}}else battery=Math.min(100,battery+dt*.24);
-      torch.intensity=flashOn?42:0;fillTorch.intensity=flashOn?1.1:0;batteryFill.style.width=battery+'%';batteryFill.style.background=battery<25?'#b23a32':'#cbb887';
-      const mins=17+Math.floor(elapsed/12);document.querySelector('#clock').textContent=`03:${(mins%60).toString().padStart(2,'0')} AM`;
-      lights.forEach(o=>{const flicker=Math.random()<dt*.12?.15+Math.random()*.65:1;o.light.intensity=o.base*flicker});
-      if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)toast.classList.remove('show')}
+    const world=new THREE.Group();scene.add(world);let selectedMap=maps[0],items=[],ceilingLights=[],monster;let wallMaterial,floorMaterial,doorMaterial,metalMaterial,paperMaterial;
+    function box(parent,x,y,z,w,h,d,material,cast=false){const obj=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);obj.position.set(x,y,z);obj.castShadow=cast;obj.receiveShadow=true;parent.add(obj);return obj}
+    function buildMap(map){
+      world.clear();items=[];ceilingLights=[];selectedMap=map;scene.background=new THREE.Color(map.fog);scene.fog=new THREE.FogExp2(map.fog,.035);wallMaterial=mat(map.wall);floorMaterial=mat(map.floor);doorMaterial=mat(map.id==='morgue'?0x49403b:0x45473f);metalMaterial=mat(0x68706b,.55,.5);paperMaterial=mat(0xc8bd9f);
+      box(world,0,-.17,-3,8,.3,67,floorMaterial);box(world,0,3.8,-3,8,.25,67,mat(0x343936));box(world,-4,1.8,-3,.25,3.6,67,wallMaterial);box(world,4,1.8,-3,.25,3.6,67,wallMaterial);box(world,-3.86,.75,-3,.05,1.45,67,mat(0x464941));box(world,3.86,.75,-3,.05,1.45,67,mat(0x464941));box(world,0,1.8,-36,8,3.6,.3,wallMaterial);box(world,0,1.8,30,8,3.6,.3,wallMaterial);
+      for(let z=29;z>-35;z-=2){box(world,0,-.005,z,7.85,.016,.018,mat(0x55574e));box(world,-3.86,1.48,z,.025,.035,.025,mat(0x777365));box(world,3.86,1.48,z,.025,.035,.025,mat(0x777365))}for(let x=-3.5;x<=3.5;x+=2)box(world,x,-.004,-3,.018,.018,66,mat(0x55574e));
+      // Patient doors, room plates, overhead lights, pipes, and emergency lamps.
+      for(let z=24;z>-32;z-=8)for(const side of [-1,1]){box(world,side*3.86,1.28,z,.14,2.55,2.05,doorMaterial,true);box(world,side*3.74,1.65,z-.48,.035,.42,.55,mat(0x252b28));box(world,side*3.69,1.12,z+.72,.025,.4,.32,mat(0x583832))}
+      for(let z=25;z>-33;z-=8){box(world,0,3.62,z,1.3,.04,2.6,mat(0x9d9b83));const light=new THREE.PointLight(map.light,1.8,11,2);light.position.set(0,3.25,z);world.add(light);ceilingLights.push({light,phase:Math.random()*8,base:1.8});box(world,0,3.35,z,1.08,.08,2.3,mat(0xc1bea7,.5))}
+      for(const z of [8,-16,-32]){const lamp=new THREE.PointLight(0xa32a20,1.5,7,2);lamp.position.set(3.55,2.65,z);world.add(lamp);box(world,3.72,2.65,z,.1,.3,.38,mat(0x9b3028))}
+      // Simple environment-specific set dressing.
+      for(const z of [-5,-23]){const cart=new THREE.Group();cart.position.set(z===-5?-2.25:2.25,0,z);world.add(cart);box(cart,0,.76,0,.82,.08,1.15,metalMaterial);box(cart,0,.46,0,.7,.08,1.02,mat(0x555b56));for(const xx of [-.3,.3])for(const zz of [-.4,.4]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.08,8),mat(0x171a18));wheel.rotation.z=Math.PI/2;wheel.position.set(xx,.12,zz);cart.add(wheel)}}
+      // Exit door and glowing sign.
+      box(world,0,1.45,-35.7,2.2,2.9,.12,mat(0x315347));const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=128;const c=signCanvas.getContext('2d');c.fillStyle='#8c2924';c.fillRect(0,0,512,128);c.fillStyle='#eee3ce';c.font='bold 66px Arial';c.textAlign='center';c.fillText('SORTIE',256,86);const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.4,.55),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(signCanvas)}));sign.position.set(0,3.25,-35.58);world.add(sign);
+      // Three searchable patient files, placed on the route.
+      [-8,-20,-30].forEach((z,i)=>{const group=new THREE.Group();group.position.set(i===1?2.45:-2.45,.82,z);world.add(group);const card=box(group,0,0,0,.42,.055,.58,paperMaterial);card.rotation.y=-.2;box(group,-.09,.04,-.08,.22,.012,.018,mat(0x583832));const glow=new THREE.PointLight(0xd2a65f,.7,2.2,2);glow.position.y=.2;group.add(glow);const ring=new THREE.Mesh(new THREE.TorusGeometry(.34,.016,6,20),new THREE.MeshBasicMaterial({color:0xc9a65f,transparent:true,opacity:.6}));ring.rotation.x=Math.PI/2;group.add(ring);items.push({group,x:group.position.x,z,found:false,ring})});
+      // Ambient environment lighting.
+      const hemisphere=new THREE.HemisphereLight(0x66706c,0x151713,.35);world.add(hemisphere);const ambient=new THREE.AmbientLight(0x77756a,.19);world.add(ambient);
     }
-    function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;if(playing)update(dt);renderer.render(scene,camera)}requestAnimationFrame(animate);
+    function makeMonster(){const g=new THREE.Group(),robe=mat(0x171b19),skin=mat(0x88877a),red=new THREE.MeshBasicMaterial({color:0xc22c20});const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.43,1.15,5,8),robe);torso.position.y=1.43;g.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.31,12,10),skin);head.scale.set(.82,1.16,.85);head.position.set(0,2.52,-.08);g.add(head);const hood=new THREE.Mesh(new THREE.SphereGeometry(.38,12,8,0,Math.PI*2,0,Math.PI*.75),robe);hood.position.set(0,2.58,.01);g.add(hood);for(const x of [-.12,.12]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.043,8,6),red);eye.position.set(x,2.52,-.31);g.add(eye)}for(const x of [-.48,.48]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.11,.9,4,6),robe);arm.position.set(x,1.5,0);arm.rotation.z=x*.15;g.add(arm);const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.62,4,6),robe);leg.position.set(x*.42,.4,0);g.add(leg)}return g}
+    monster=makeMonster();world.add(monster);
+    const torch=new THREE.SpotLight(0xffedc8,44,23,Math.PI/7,.48,1.3);camera.add(torch);torch.target.position.set(0,0,-1);camera.add(torch.target);scene.add(camera);const fill=new THREE.PointLight(0xffe6bc,1,3.5,2);camera.add(fill);
+
+    const overlay=document.querySelector('#overlay'),panel=document.querySelector('#panel'),objective=document.querySelector('#objective'),toast=document.querySelector('#toast');let toastTimer;
+    const game={state:'menu',map:maps[0],x:0,z:26,yaw:0,pitch:0,monsterX:0,monsterZ:22,files:0,time:0,battery:100,stamina:100,flash:true,running:false,last:performance.now(),keys:{},pointer:false,recorded:false,audio:null};camera.position.set(0,1.65,26);
+    function notify(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2300)}
+    function profileSummary(){const p=getProfile();return `NIVEAU ${p.level} · ${p.coins} PIÈCES · ${p.runs} PARTIES`}
+    function menuMarkup(){return `<p class="eyebrow">HÔPITAL SAINT-AURORE · 03:17</p><h1>Dernier<br><span>service.</span></h1><p class="copy">Les couloirs sont condamnés depuis vingt ans. Retrouvez les trois dossiers et atteignez la sortie. Quelque chose vous a entendu.</p><div class="map-grid">${maps.map(m=>`<button class="map-card ${game.map.id===m.id?'active':''}" data-map="${m.id}"><small>${m.short}</small><strong>${m.name}</strong></button>`).join('')}</div><div class="controls"><b>WASD</b> — bouger · <b>SOURIS</b> — regarder · <b>MAJ</b> — courir<br><b>F</b> — lampe torche · <b>ÉCHAP</b> — pause</div><button class="action" id="start">ENTRER DANS L’HÔPITAL ↗</button><div class="secondary"><span>${profileSummary()}</span><a href="menu.html">MENU PRINCIPAL ↗</a></div>`}
+    function showMenu(){game.state='menu';document.body.classList.remove('playing','is-danger');panel.innerHTML=menuMarkup();overlay.classList.remove('hidden');panel.querySelectorAll('[data-map]').forEach(button=>button.addEventListener('click',()=>{game.map=maps.find(m=>m.id===button.dataset.map);panel.innerHTML=menuMarkup();wireMenu()}));wireMenu()}
+    function wireMenu(){panel.querySelectorAll('[data-map]').forEach(button=>button.addEventListener('click',()=>{game.map=maps.find(m=>m.id===button.dataset.map);showMenu()}));const start=document.querySelector('#start');if(start)start.addEventListener('click',startGame);}
+    function settingsMarkup(){const s=loadSettings();return `<p class="eyebrow">CONFIGURATION</p><h1 style="font-size:58px">Pause.</h1><p class="copy">La partie est suspendue.</p><label class="setting-row">Volume général <input id="volume" type="range" min="0" max="100" value="${s.masterVolume}"></label><label class="setting-row">Qualité visuelle <select id="quality"><option value="low" ${s.quality==='low'?'selected':''}>Basse</option><option value="medium" ${s.quality==='medium'?'selected':''}>Moyenne</option><option value="high" ${s.quality==='high'?'selected':''}>Élevée</option></select></label><button class="action" id="resume">REPRENDRE</button><button class="action" id="saveSettings" style="margin-top:8px;background:#171b19;border-color:#ffffff30">ENREGISTRER</button>`}
+    function pause(){if(game.state!=='playing')return;game.state='paused';document.exitPointerLock?.();overlay.classList.remove('hidden');panel.innerHTML=settingsMarkup();document.querySelector('#resume').onclick=()=>{overlay.classList.add('hidden');game.state='playing';if(innerWidth>700)renderer.domElement.requestPointerLock?.()};document.querySelector('#saveSettings').onclick=()=>{const settings={masterVolume:Number(document.querySelector('#volume').value),quality:document.querySelector('#quality').value};saveSettings(settings);renderer.setPixelRatio(Math.min(devicePixelRatio,settings.quality==='low'?1:settings.quality==='medium'?1.35:1.7));notify('Paramètres enregistrés.')}}
+    function startGame(){buildMap(game.map);game.x=0;game.z=26;game.yaw=0;game.pitch=0;game.monsterX=0;game.monsterZ=22;game.files=0;game.time=0;game.battery=100;game.stamina=100;game.flash=true;game.recorded=false;game.state='playing';camera.position.set(0,1.65,game.z);monster.position.set(game.monsterX,0,game.monsterZ);monster.visible=true;document.querySelector('#mapName').textContent=game.map.name.toUpperCase();document.querySelectorAll('.dots i').forEach(el=>el.classList.remove('on'));objective.textContent='Trouvez les 3 dossiers';overlay.classList.add('hidden');document.body.classList.add('playing');if(innerWidth>700)renderer.domElement.requestPointerLock?.();startAmbience()}
+    function finish(won){if(game.recorded)return;game.recorded=true;game.state='result';document.body.classList.remove('playing','is-danger');document.exitPointerLock?.();const reward=recordRun({won,filesFound:game.files,durationSeconds:game.time});const p=getProfile();overlay.classList.remove('hidden');panel.innerHTML=`<p class="eyebrow">${won?'VOUS AVEZ SURVÉCU':'FIN DE SERVICE'}</p><h1>${won?'Vous êtes':'Il vous'}<br><span>${won?'sorti·e.':'a trouvé.'}</span></h1><p class="copy">${won?'La porte se referme. Les dossiers sont en sécurité.':'Le couloir redevient silencieux. Votre dossier rejoint les archives.'}</p><div class="result">+${reward.coinsEarned} PIÈCES · +${reward.xpEarned} XP</div><div class="controls">DOSSIERS : ${game.files} / 3 · DURÉE : ${formatTime(game.time)}<br>NIVEAU ${p.level} · ${p.xp} XP · ${p.coins} PIÈCES${reward.levelsGained.length?`<br>NIVEAU SUPÉRIEUR : ${reward.levelsGained.join(', ')}`:''}</div><button class="action" id="again">RETOURNER AU MENU ↗</button><div class="secondary"><a href="menu.html">MENU PRINCIPAL</a><span>PROGRESSION SAUVEGARDÉE</span></div>`;document.querySelector('#again').onclick=showMenu;stopAmbience()}
+    const formatTime=t=>`${Math.floor(t/60).toString().padStart(2,'0')}:${Math.floor(t%60).toString().padStart(2,'0')}`;
+    function startAmbience(){try{if(!game.audio){const ctx=new AudioContext(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=47;gain.gain.value=.018*(loadSettings().masterVolume/80);osc.connect(gain);gain.connect(ctx.destination);osc.start();game.audio={ctx,osc,gain}}else game.audio.ctx.resume()}catch{}}
+    function stopAmbience(){if(game.audio)game.audio.ctx.suspend().catch(()=>{})}
+    function stepSound(){try{const ctx=game.audio?.ctx;if(!ctx||ctx.state!=='running')return;const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(72,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(35,ctx.currentTime+.09);gain.gain.setValueAtTime(.035*(loadSettings().masterVolume/100),ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.13)}catch{}}
+    document.addEventListener('pointerlockchange',()=>game.pointer=document.pointerLockElement===renderer.domElement);document.addEventListener('mousemove',e=>{if(game.state==='playing'&&game.pointer){game.yaw-=e.movementX*.0022;game.pitch=Math.max(-1.2,Math.min(1.2,game.pitch-e.movementY*.0018))}});
+    document.addEventListener('keydown',e=>{const key=e.key.toLowerCase();game.keys[key]=true;if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(key))e.preventDefault();if(key==='f'&&game.state==='playing'){game.flash=!game.flash;notify(game.flash?'LAMPE ALLUMÉE':'LAMPE ÉTEINTE')}if(key==='escape'){if(game.state==='playing')pause();else if(game.state==='paused'){game.state='playing';overlay.classList.add('hidden');if(innerWidth>700)renderer.domElement.requestPointerLock?.()}}});document.addEventListener('keyup',e=>game.keys[e.key.toLowerCase()]=false);
+    renderer.domElement.addEventListener('click',()=>{if(game.state==='playing'&&!game.pointer&&innerWidth>700)renderer.domElement.requestPointerLock?.()});
+    function update(dt){game.time+=dt;camera.rotation.set(game.pitch,game.yaw,0,'YXZ');const forward=(game.keys.w||game.keys.arrowup?1:0)-(game.keys.s||game.keys.arrowdown?1:0),side=(game.keys.d||game.keys.arrowright?1:0)-(game.keys.a||game.keys.arrowleft?1:0),length=Math.hypot(forward,side)||1;const wantsRun=!!game.keys.shift&&forward!==0&&game.stamina>0;game.running=wantsRun;const speed=wantsRun?5.0:3.3;const dx=(Math.sin(game.yaw)*forward+Math.cos(game.yaw)*side)/length*speed*dt,dz=(-Math.cos(game.yaw)*forward+Math.sin(game.yaw)*side)/length*speed*dt;game.x=Math.max(-3.35,Math.min(3.35,game.x+dx));game.z=Math.max(-34.8,Math.min(28,game.z+dz));camera.position.set(game.x,1.65+Math.sin(game.time*9)*Math.min(.035,Math.hypot(dx,dz)*.03),game.z);
+      if(wantsRun)game.stamina=Math.max(0,game.stamina-26*dt);else game.stamina=Math.min(100,game.stamina+15*dt);document.querySelector('#staminaBar').style.width=game.stamina+'%';document.querySelector('#staminaBar').style.background=game.stamina<22?'#a63832':'#cbb887';
+      items.forEach((item,index)=>{item.ring.rotation.z+=dt*.7;if(!item.found&&Math.hypot(game.x-item.x,game.z-item.z)<1.15){item.found=true;item.group.visible=false;game.files++;document.querySelectorAll('.dots i')[index].classList.add('on');objective.textContent=game.files<3?'Trouvez les dossiers restants':'Rejoignez la sortie';notify('DOSSIER PATIENT RÉCUPÉRÉ')}});
+      const chaseSpeed=1.55+game.files*.1;game.monsterZ-=chaseSpeed*dt;game.monsterX+=(game.x-game.monsterX)*Math.min(1,dt*.65);monster.position.set(game.monsterX,0,game.monsterZ);monster.rotation.y=Math.atan2(game.x-game.monsterX,game.z-game.monsterZ);monster.children.forEach((child,i)=>{if(i===0||i===1)child.rotation.x=Math.sin(game.time*5+i)*.04});
+      const distance=Math.hypot(game.x-game.monsterX,game.z-game.monsterZ);document.body.classList.toggle('is-danger',distance<8);if(distance<1.25){finish(false);return}if(game.files===3&&game.z<-34){finish(true);return}
+      if(game.flash)game.battery=Math.max(0,game.battery-.55*dt);else game.battery=Math.min(100,game.battery+1.6*dt);if(game.battery===0&&game.flash){game.flash=false;notify('BATTERIE ÉPUISÉE')}torch.intensity=game.flash?44:0;fill.intensity=game.flash?1:0;document.querySelector('#batteryBar').style.width=game.battery+'%';document.querySelector('#batteryBar').style.background=game.battery<20?'#a63832':'#cbb887';
+      const minute=17+Math.floor(game.time/10);document.querySelector('#clock').textContent=`03:${String(minute%60).padStart(2,'0')} AM`;ceilingLights.forEach(entry=>{entry.light.intensity=entry.base*(Math.random()<dt*.1?.2+Math.random()*.6:1)});if(Math.hypot(dx,dz)>.02&&Math.random()<dt*(wantsRun?2.3:1.2))stepSound();
+    }
+    function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-game.last)/1000);game.last=now;if(game.state==='playing')update(dt);renderer.render(scene,camera)}
     addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight)});
+    buildMap(game.map);showMenu();requestAnimationFrame(animate);
   </script>
 </body>
 </html>
