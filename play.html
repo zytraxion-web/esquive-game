@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0b">
+  <title>Dernier Service — Jeu</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Oswald:wght@400;500;600&display=swap');
+    *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#090b0b;color:#e2ddcf;font-family:'DM Mono',monospace}.backdrop{position:fixed;inset:0;background:linear-gradient(90deg,#050707ed 0%,#050707b8 45%,#05070739 100%),radial-gradient(ellipse at 75% 45%,#535748 0,#23271f 28%,#090b0b 75%)}.backdrop:before{content:"";position:absolute;inset:8% 8% 0 42%;opacity:.45;background:repeating-linear-gradient(90deg,transparent 0 13%,#a7a48a20 13.2% 13.5%,transparent 13.7% 28%),repeating-linear-gradient(180deg,transparent 0 17%,#b5b39a12 17.2% 17.5%,transparent 17.7% 34%);clip-path:polygon(25% 0,75% 0,100% 100%,0 100%)}.top{height:76px;position:absolute;z-index:2;top:0;left:0;right:0;padding:0 5vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff19}.brand{display:flex;align-items:center;gap:12px;font:500 11px/1.1 Oswald,sans-serif;letter-spacing:.14em}.mark{width:32px;height:32px;border:1px solid #a63832;display:grid;place-items:center;font:12px 'DM Mono',monospace}.meta{font-size:9px;letter-spacing:.16em;color:#aaa99f}.led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#a63832;box-shadow:0 0 10px #a63832;margin-right:8px}.landing{position:absolute;z-index:1;inset:76px 0 42px;display:flex;align-items:center;padding:5vh 11vw;transition:opacity .25s,visibility .25s}.landing.hidden{opacity:0;visibility:hidden;pointer-events:none}.copy{max-width:570px}.eyebrow{font-size:9px;color:#b8574d;letter-spacing:.23em}.title{font:600 clamp(70px,10vw,128px)/.8 Oswald,sans-serif;text-transform:uppercase;letter-spacing:.005em;margin:28px 0;color:#e4dfd2}.title span{color:#a63832}.description{font-size:10px;line-height:2;color:#aaa99f;margin:24px 0}.play{width:min(300px,100%);height:52px;padding:0 17px;border:1px solid #c1564b;background:#a63832;color:#f0e9dc;display:flex;align-items:center;justify-content:space-between;font:10px 'DM Mono',monospace;letter-spacing:.18em;cursor:pointer}.play:hover{background:#c1483d}.hint{margin-top:13px;font-size:8px;letter-spacing:.12em;color:#777970}.bottom{position:absolute;z-index:2;bottom:0;left:0;right:0;height:42px;padding:0 5vw;border-top:1px solid #ffffff15;display:flex;align-items:center;justify-content:space-between;color:#777970;font-size:7px;letter-spacing:.13em}.game-shell{position:fixed;z-index:5;inset:0;background:#090b0b;visibility:hidden;opacity:0;transition:opacity .25s,visibility .25s}.game-shell.open{visibility:visible;opacity:1}.game-shell iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.return{position:absolute;z-index:6;top:16px;left:16px;border:1px solid #ffffff42;background:#101311dc;color:#e2ddcf;padding:11px 14px;font:9px 'DM Mono',monospace;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(8px)}.return:hover{border-color:#b8574d;background:#251412}.notice{position:absolute;z-index:6;right:16px;top:17px;color:#d4cbb9;background:#101311cb;border:1px solid #ffffff28;padding:10px 12px;font-size:8px;letter-spacing:.06em;pointer-events:none}@media(max-width:600px){.top{height:62px;padding:0 18px}.landing{inset:62px 0 40px;padding:7vh 25px}.title{font-size:clamp(70px,18vw,100px)}.meta{font-size:7px}.bottom{height:40px;padding:0 17px;font-size:6px}.bottom span:nth-child(2){display:none}.return{top:9px;left:9px;padding:9px;font-size:8px}.notice{top:10px;right:9px;font-size:7px}}
+  </style>
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+  <header class="top"><div class="brand"><span class="mark">DS</span><span>DERNIER<br>SERVICE</span></div><div class="meta"><span class="led"></span>SAINT-AURORE &nbsp; / &nbsp; NUIT 03</div></header>
+  <main class="landing" id="landing"><div class="copy"><p class="eyebrow">HÔPITAL SAINT-AURORE · 03:17</p><h1 class="title">Dernier<br><span>service.</span></h1><p class="description">Le courant est revenu. Quelque chose aussi.<br>Retrouvez les dossiers. Ne vous faites pas entendre.</p><button class="play" id="play"><span>JOUER</span><span>↗</span></button><p class="hint">WASD POUR BOUGER · SOURIS POUR REGARDER · MAJ POUR COURIR</p></div></main>
+  <footer class="bottom"><span>PROTOTYPE 3D · SOLO</span><span>RÉCUPÉREZ LES 3 DOSSIERS ET FUYEZ</span><span>ZYTRAXION WEB</span></footer>
+  <section class="game-shell" id="gameShell" aria-label="Jeu Dernier Service"><iframe id="gameFrame" title="Jeu 3D Dernier Service" allow="fullscreen; autoplay"></iframe><button class="return" id="return">← MENU PRINCIPAL</button><div class="notice">Dans l’écran suivant, choisissez une carte puis cliquez sur ENTRER.</div></section>
+  <script>
+    const landing=document.querySelector('#landing');
+    const shell=document.querySelector('#gameShell');
+    const frame=document.querySelector('#gameFrame');
+    document.querySelector('#play').addEventListener('click',()=>{
+      landing.classList.add('hidden');
+      shell.classList.add('open');
+      if(!frame.src) frame.src='index.html?embedded=1';
+    });
+    document.querySelector('#return').addEventListener('click',()=>{
+      shell.classList.remove('open');
+      landing.classList.remove('hidden');
+      try{frame.contentWindow.document.exitPointerLock?.()}catch{}
+    });
+  </script>
+</body>
+</html>
